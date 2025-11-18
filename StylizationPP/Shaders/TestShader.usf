@@ -1,0 +1,21 @@
+// 一个简单的色彩滤镜shader
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Public/Platform.ush"
+
+float3 TargetColour;
+Texture2D<float4> SceneColorTexture;
+
+float4 MainPS(float4 SvPosition : SV_POSITION) : SV_Target0
+{
+	// 步骤1：采样场景颜色
+	float2 UV = SvPosition.xy / SvPosition.w;  // 转换为归一化UV坐标
+	float4 SceneColour = SceneColorTexture.Load(int3(UV, 0));
+
+	// 步骤2：基于目标颜色的色偏校正（RGB通道乘法）
+	float3 CorrectedColor = SceneColour.rgb * TargetColour;
+
+	// 步骤3：限制颜色范围（避免过曝，保持在[0,1]）
+	CorrectedColor = saturate(CorrectedColor);
+
+	return float4(CorrectedColor, 1.0); 
+}

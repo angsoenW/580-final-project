@@ -1,0 +1,47 @@
+﻿// custom sceneviewextension template for unreal engine
+// copyright 2023 - 2025 ossi luoto
+// 
+// custom cs postprocessing shader
+
+#include "/engine/public/platform.ush"
+#include "/engine/private/common.ush"
+#include "/engine/private/screenpass.ush"
+
+// shader parameters
+
+// scenecolor texture
+texture2d originalscenecolor;
+
+// scenecolor viewport parameters
+screen_pass_texture_viewport(scenecolorviewport)
+
+// output
+rwtexture2d<float4>
+output;
+
+// compute shader code
+[numthreads(threads_x, threads_y, threads_z)]
+void maincs(uint2 dispatchthreadid : sv_dispatchthreadid)
+{
+	// check that we are in scope
+    if (any(dispatchthreadid >= scenecolorviewport_viewportmax))
+    {
+        return;
+    }
+	
+    // calculate sampleuv with viewport parameters
+    float2 sampleuv = (float2(scenecolorviewport_viewportmin) + (dispatchthreadid + 0.5)) * scenecolorviewport_extentinverse;
+
+    // sample originalcolor
+    float4 originalcolor = originalscenecolor.samplelevel(globalpointclampedsampler, sampleuv, 0);
+
+    // to test that everything is working, switch red and blue
+    float4 outputcolor = float4(originalcolor.z, originalcolor.y, originalcolor.x, originalcolor.w);
+
+    // write output
+    output[scenecolorviewport_viewportmin + dispatchthreadid] = outputcolor;
+}
+
+
+
+
